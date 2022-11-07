@@ -1,0 +1,38 @@
+public Database.QueryLoactor start(Database.BatchableContext bc) {
+   return [SELECT Id, Email
+           FROM User];
+}
+
+public void execute(Database.BatchableContext bc User[] users) {
+    // collect all userIds to find open Tasks
+    Map<Id,User> usersById = new Map<Id,User> (users);
+    
+    // get all Open tasks for these userIds
+    Map<Id,Task[] openTasksByUserId = new Map<Id,Task[]>(); 
+    for (Task t : [SELECT ...
+                     FROM Task
+                     WHERE OwnerId IN : usersById.keySet() AND
+                           Status = 'Open'] ) {
+      if (!openTasksByUserId.containsKey(t.OwnerId)) {
+           openTasksByUserId.put(t.OwnerId,new List<Task>();
+      }
+      opentasksByUserId.get(t.OwnerId).add(t);
+    };
+             
+  // for all users with open Tasks, send email w/ tasks
+  for (Id userId: openTasksByUserId.keySet()) {
+     Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+     mail.toAddresses = new List<String> {usersById.get(userId).Email};
+     String[] displayableTasks = new List<String>();
+     for (Task t: openTasksByUserId.get(userId)) {
+      displayableTasks.add(htmlMe(t));
+     }
+     mail.setHtmlBody(displayableTasks);  
+     ...
+     mail.send();  // there are limits to worry about, you can't send too many emails/day by apex 
+  }
+}
+private String htmlMe(Task t) {
+   return someFormnatted HTML based on a Task  
+}
+public void finish(Database.BatchableContext bc) {}
